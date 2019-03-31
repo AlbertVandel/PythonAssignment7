@@ -1,4 +1,6 @@
 from selenium import webdriver
+from operator import itemgetter
+import bs4
 
 url = 'https://www.dba.dk'
 browser = webdriver.Firefox()
@@ -36,3 +38,19 @@ def search_cph_recent(phrase):
     b = browser.find_element_by_xpath("//span[contains(text(),'Seneste 24 timer')]")
     browser.execute_script("arguments[0].click();",b)  
     return browser.page_source
+
+def extract_products(source):
+    soup = bs4.BeautifulSoup(source, 'html.parser')
+    
+    products = soup.find_all('tr',{'class': 'dbaListing'})
+    
+    products_list = []
+
+    for p in products:
+        description = p.select('td div a')[1].text
+        price = int(''.join(filter(str.isdigit,p.select('a')[6].text)))
+        image_url = p.select('td div a div')[0]
+        details_url = p.select('td a')[1]
+        t = (description,price,image_url,details_url)
+        products_list.append(t)
+    return sorted(products_list,key=itemgetter(1))
